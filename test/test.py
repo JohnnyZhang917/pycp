@@ -366,6 +366,15 @@ class MvTestCase(unittest.TestCase):
         self.assertEquals(b_contents, "b\n")
         self.assertTrue(os.path.exists(a_file))
 
+    def test_create_new_source_in_dest(self):
+        a_dir = os.path.join(self.test_dir, "a_dir")
+        dest = os.path.join(self.test_dir, "dest")
+        os.mkdir(dest)
+        sys.argv = ["pymv", a_dir, dest]
+        pycp_main()
+        self.assertTrue(os.path.exists(
+            os.path.join(dest, "a_dir")))
+
     def test_empty(self):
         "a_dir/empty -> b_dir"
         a_dir = os.path.join(self.test_dir, "a_dir")
