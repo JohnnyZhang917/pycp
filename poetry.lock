@@ -17,7 +17,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "1.3.0"
 
 [[package]]
-category = "main"
+category = "dev"
 description = "Classes Without Boilerplate"
 name = "attrs"
 optional = false
@@ -367,7 +367,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "d9ec6d03a031ff7206e2319b35a12574a42b8af86096e9d38b6a0b3eedf980d4"
+content-hash = "ae185b86bcbc619b89cf2da36b512cef20aaa87c00212c9d21602498faf3b86e"
 python-versions = "^3.6"
 
 [metadata.files]
