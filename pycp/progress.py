@@ -5,7 +5,34 @@ import sys
 import time
 import typing
 
-import attr
+# Implementation notes:
+#
+# We want to build lines that look like this:
+#
+# [10/18]  46% - [########################                            ] - 00:00:01
+#
+# In order to do this, each line is composed of several components with a
+# `render()` method
+# Each render() method takes a `props` dict and each component knows how to
+# render its props.
+#
+# For instance:
+#  >>> Percent.render({"current_value: 3, max_value: 4})
+#  (4, ' 75%')
+#
+# In the example above, the sizes taken by the counter ([10/18]), the percent
+# done (46%) and the ETA (00:00:01) are constant. So we use the Bar component
+# to fill the remaining available size.
+#
+# This is why in Line.__init__(), we make there's exactly one FillerComponent
+# in the list of components.
+#
+# Then in Line.render() we can compute the size taken by all the non-filler
+# components, render the filler component and finally render the whole line.
+#
+# Final note: the render() method return the "concrete" size of the rendered
+# text - so that AnsiEscapeSequence components are actually considered of
+# size 0 in the above algorithm
 
 
 class Progress:
@@ -235,8 +262,11 @@ class DynamicText(Component, metaclass=abc.ABCMeta):
         return len(text), text
 
 
-# TODO: fix name
-class FixedWidthComponent(Component, metaclass=abc.ABCMeta):
+class FillerComponent(Component, metaclass=abc.ABCMeta):
+    """ This is a special component that is guaranteed to render
+    as a string of `width` size
+    """
+
     def render(self, props: Props) -> SizedString:
         width = props["width"]
         text = self.render_props_for_width(props, width)
@@ -247,7 +277,7 @@ class FixedWidthComponent(Component, metaclass=abc.ABCMeta):
         pass
 
 
-class TransferText(FillerComponen):
+class TransferText(FillerComponent):
     def render_props_for_width(self, props: Props, width: int) -> str:
         src = props["src"]
         dest = props["dest"]
@@ -294,7 +324,7 @@ class Percent(DynamicText):
         return "%3d%%" % int(fraction * 100)
 
 
-class Bar(FixedWidthComponent):
+class Bar(FillerComponent):
     def render_props_for_width(self, props: Props, width: int) -> str:
         current_value = props["current_value"]
         max_value = props["max_value"]
@@ -356,36 +386,31 @@ class Filename(DynamicText):
         return shorten_path(filename, 40)
 
 
-@attr.s
-class FixedTuple:
-    index: int = attr.ib()
-    component: Component = attr.ib()
-
-
 class Line:
     def __init__(self, components: typing.List[Component]) -> None:
         self.components = components
-        fixed = list()
+        fillers = list()
         for (i, component) in enumerate(components):
-            if isinstance(component, FixedWidthComponent):
-                fixed.append(FixedTuple(i, component))
-        assert len(fixed) == 1, "Expecting exactly one fixed width component"
-        self.fixed = fixed[0]
+            if isinstance(component, FillerComponent):
+                fillers.append((i, component))
+        assert len(fillers) == 1, "Expecting exactly one filler  component"
+        self.filler = fillers[0]
 
     def render(self, **kwargs: typing.Any) -> str:
         accumulator = [""] * len(self.components)
         term_width = shutil.get_terminal_size().columns
         current_width = 0
+        filler_index, filler_component = self.filler
         for i, component in enumerate(self.components):
-            if i == self.fixed.index:
+            if i == filler_index:
                 continue
             length, string = component.render(kwargs)
             accumulator[i] = string
             current_width += length
 
-        fixed_width = term_width - current_width
-        kwargs["width"] = fixed_width
-        accumulator[self.fixed.index] = self.fixed.component.render(kwargs)[1]
+        filler_width = term_width - current_width
+        kwargs["width"] = filler_width
+        accumulator[filler_index] = filler_component.render(kwargs)[1]
 
         return "".join(accumulator)
 
