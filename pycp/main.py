@@ -85,10 +85,6 @@ def parse_commandline() -> argparse.Namespace:
         help="display only one progress bar during transfer",
     )
 
-    parser.add_argument(
-        "--i-love-candy", action="store_true", dest="pacman", help=argparse.SUPPRESS
-    )
-
     parser.set_defaults(
         safe=False,
         interactive=False,

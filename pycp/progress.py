@@ -247,7 +247,7 @@ class FixedWidthComponent(Component, metaclass=abc.ABCMeta):
         pass
 
 
-class TransferText(FixedWidthComponent):
+class TransferText(FillerComponen):
     def render_props_for_width(self, props: Props, width: int) -> str:
         src = props["src"]
         dest = props["dest"]
