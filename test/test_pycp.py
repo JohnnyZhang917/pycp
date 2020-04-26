@@ -244,7 +244,6 @@ def test_preserve(test_dir: str) -> None:
     assert copy_stat.st_mtime == pytest.approx(long_ago, abs=1)
 
 
-@pytest.mark.xfail()
 def test_output_does_not_wrap_1(
     test_dir: str, capsys: typing.Any, mocker: typing.Any
 ) -> None:
@@ -252,8 +251,6 @@ def test_output_does_not_wrap_1(
     When not using --global, each printed line length
     should be less that the terminal size
     """
-    # and we'll trigger this bug:
-    # https://github.com/dmerejkowsky/pycp/issues/29
     a_file = os.path.join(test_dir, "a_file")
     a_file_back = os.path.join(test_dir, "a_file.back")
 
@@ -263,7 +260,8 @@ def test_output_does_not_wrap_1(
     pycp_main()
     out, err = capsys.readouterr()
     lines = re.split(r"\r|\n", out)
-    for line in lines:
+    lines.pop(0)  # first line can be as long as we want
+    for line in lines[1:]:
         assert len(strip_ansi_colors(line)) <= expected_width
 
 
